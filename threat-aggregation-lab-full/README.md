@@ -27,7 +27,6 @@ A comprehensive platform for collecting, normalizing, and visualizing threat int
 ## Installation
 
 1. Clone the repository:
-```bash
 git clone <repository-url>
 cd threat-aggregation-lab-full
 
