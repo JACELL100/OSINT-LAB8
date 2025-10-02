@@ -102,5 +102,21 @@ data/
 <div>
     <img src="images/dash1.jpeg">
 </div>
-
-
+<div>
+    <img src="images/dash2.jpeg">
+</div>
+<div>
+    <img src="images/dash3.jpeg">
+</div>
+<div>
+    <img src="images/vs1.jpg">
+</div>
+<div>
+    <img src="images/vs2.jpg">
+</div>
+<div>
+    <img src="images/vs3.jpg">
+</div>
+<div>
+    <img src="images/vs4.jpg">
+</div>
