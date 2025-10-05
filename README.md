@@ -106,10 +106,10 @@ data/
     <img src="images/dash2.jpeg">
 </div>
 <div>
-    <img src="images/dash3.jpeg">
+    <img src="images/dash4.jpeg">
 </div>
 <div>
-    <img src="images/dash4.jpeg">
+    <img src="images/dash3.jpeg">
 </div>
 <div>
     <img src="images/vs1.jpg">
