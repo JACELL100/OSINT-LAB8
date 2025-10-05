@@ -1,0 +1,3 @@
+{"url": "http://malicious-site.ru/dropper.exe", "threat": "malware_download", "date_added": "2025-10-01 15:32:00 UTC", "source": "abusech"}
+{"url": "http://phishingsite.net/login.php", "threat": "phishing", "date_added": "2025-10-02 09:20:00 UTC", "source": "abusech"}
+{"url": "https://evilserver.org/ransomware/payload.zip", "threat": "ransomware", "date_added": "2025-09-30 23:44:00 UTC", "source": "abusech"}
