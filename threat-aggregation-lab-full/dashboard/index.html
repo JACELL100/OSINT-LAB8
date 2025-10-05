@@ -28,6 +28,7 @@
   .stat{font-size:20px;font-weight:700}
   .label{color:var(--muted);font-size:13px;margin-top:6px}
   .chart{margin-top:10px;height:140px}
+  .chart-tall{margin-top:10px;height:200px}
   .table-wrap{background:var(--card);padding:12px;border-radius:10px;color:#dbeafe;overflow:auto}
   table{width:100%;border-collapse:collapse;font-size:13px;color:#dbeafe}
   th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03)}
@@ -86,6 +87,21 @@
         <div id="topIndicators" style="margin-top:8px"></div>
       </div>
 
+      <div class="card full">
+        <div class="label">Source Distribution (Bar Chart)</div>
+        <div class="chart-tall" id="sourceBarChart"></div>
+      </div>
+
+      <div class="card" style="grid-column:span 6">
+        <div class="label">Source Distribution (Pie Chart)</div>
+        <div class="chart-tall" id="sourcePieChart"></div>
+      </div>
+
+      <div class="card" style="grid-column:span 6">
+        <div class="label">Indicator Type Distribution (Pie Chart)</div>
+        <div class="chart-tall" id="typePieChart"></div>
+      </div>
+
       <div class="full card">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
@@ -142,6 +158,9 @@
   const sourceChart = document.getElementById('sourceChart');
   const typeChart = document.getElementById('typeChart');
   const timelineChart = document.getElementById('timelineChart');
+  const sourceBarChart = document.getElementById('sourceBarChart');
+  const sourcePieChart = document.getElementById('sourcePieChart');
+  const typePieChart = document.getElementById('typePieChart');
 
   const tableBody = document.getElementById('tableBody');
   const pageSizeSelect = document.getElementById('pageSize');
@@ -151,6 +170,9 @@
 
   let pageIndex = 1;
   let pageSize = parseInt(pageSizeSelect.value,10);
+
+  // color palette for charts
+  const colors = ['#60a5fa', '#34d399', '#f472b6', '#fbbf24', '#a78bfa', '#fb923c', '#38bdf8', '#4ade80'];
 
   // helper: parse ISO date to YYYY-MM-DD
   function toDateKey(dt){
@@ -295,6 +317,154 @@
     container.appendChild(svg);
   }
 
+  function drawVerticalBarChart(container, obj){
+    // vertical bar chart
+    container.innerHTML = "";
+    const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    if (!entries.length){
+      container.innerHTML = '<div class="small">No data</div>';
+      return;
+    }
+    const w = container.clientWidth || 800;
+    const h = container.clientHeight || 200;
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS,'svg');
+    svg.setAttribute('width','100%');
+    svg.setAttribute('height',h);
+    
+    const max = Math.max(...entries.map(e=>e[1]));
+    const padLeft = 40;
+    const padRight = 20;
+    const padTop = 20;
+    const padBottom = 60;
+    const chartW = w - padLeft - padRight;
+    const chartH = h - padTop - padBottom;
+    const barW = chartW / entries.length * 0.7;
+    const gap = chartW / entries.length * 0.3;
+
+    entries.forEach((entry, i) => {
+      const [label, value] = entry;
+      const barH = (value / max) * chartH;
+      const x = padLeft + i * (barW + gap);
+      const y = padTop + chartH - barH;
+      
+      // bar
+      const rect = document.createElementNS(svgNS,'rect');
+      rect.setAttribute('x', x);
+      rect.setAttribute('y', y);
+      rect.setAttribute('width', barW);
+      rect.setAttribute('height', barH);
+      rect.setAttribute('fill', colors[i % colors.length]);
+      rect.setAttribute('rx', 4);
+      svg.appendChild(rect);
+
+      // value on top
+      const valText = document.createElementNS(svgNS,'text');
+      valText.setAttribute('x', x + barW/2);
+      valText.setAttribute('y', y - 5);
+      valText.setAttribute('text-anchor', 'middle');
+      valText.setAttribute('fill', '#cfe6ff');
+      valText.setAttribute('font-size', '11');
+      valText.textContent = value;
+      svg.appendChild(valText);
+
+      // label at bottom
+      const labelText = document.createElementNS(svgNS,'text');
+      labelText.setAttribute('x', x + barW/2);
+      labelText.setAttribute('y', h - padBottom + 20);
+      labelText.setAttribute('text-anchor', 'middle');
+      labelText.setAttribute('fill', '#9fbff0');
+      labelText.setAttribute('font-size', '10');
+      labelText.setAttribute('transform', `rotate(-45, ${x + barW/2}, ${h - padBottom + 20})`);
+      labelText.textContent = label.length > 15 ? label.substring(0,12)+'...' : label;
+      svg.appendChild(labelText);
+    });
+
+    container.appendChild(svg);
+  }
+
+  function drawPieChart(container, obj){
+    // pie chart
+    container.innerHTML = "";
+    const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if (!entries.length){
+      container.innerHTML = '<div class="small">No data</div>';
+      return;
+    }
+    const w = container.clientWidth || 400;
+    const h = container.clientHeight || 200;
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS,'svg');
+    svg.setAttribute('width','100%');
+    svg.setAttribute('height',h);
+    
+    const cx = w * 0.35;
+    const cy = h / 2;
+    const radius = Math.min(cx, cy) * 0.7;
+    
+    const total = entries.reduce((sum, e) => sum + e[1], 0);
+    let currentAngle = -90; // start from top
+    
+    entries.forEach((entry, i) => {
+      const [label, value] = entry;
+      const sliceAngle = (value / total) * 360;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + sliceAngle;
+      
+      // Convert to radians
+      const startRad = (startAngle * Math.PI) / 180;
+      const endRad = (endAngle * Math.PI) / 180;
+      
+      // Calculate path
+      const x1 = cx + radius * Math.cos(startRad);
+      const y1 = cy + radius * Math.sin(startRad);
+      const x2 = cx + radius * Math.cos(endRad);
+      const y2 = cy + radius * Math.sin(endRad);
+      
+      const largeArc = sliceAngle > 180 ? 1 : 0;
+      
+      const path = document.createElementNS(svgNS,'path');
+      path.setAttribute('d', `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`);
+      path.setAttribute('fill', colors[i % colors.length]);
+      path.setAttribute('stroke', '#071023');
+      path.setAttribute('stroke-width', '2');
+      svg.appendChild(path);
+      
+      currentAngle = endAngle;
+    });
+    
+    // Legend
+    const legendX = w * 0.65;
+    let legendY = 30;
+    entries.forEach((entry, i) => {
+      const [label, value] = entry;
+      const percent = ((value / total) * 100).toFixed(1);
+      
+      // color box
+      const rect = document.createElementNS(svgNS,'rect');
+      rect.setAttribute('x', legendX);
+      rect.setAttribute('y', legendY - 10);
+      rect.setAttribute('width', 12);
+      rect.setAttribute('height', 12);
+      rect.setAttribute('fill', colors[i % colors.length]);
+      rect.setAttribute('rx', 2);
+      svg.appendChild(rect);
+      
+      // label
+      const text = document.createElementNS(svgNS,'text');
+      text.setAttribute('x', legendX + 18);
+      text.setAttribute('y', legendY);
+      text.setAttribute('fill', '#cfe6ff');
+      text.setAttribute('font-size', '11');
+      text.textContent = `${label.substring(0,12)} (${percent}%)`;
+      svg.appendChild(text);
+      
+      legendY += 20;
+    });
+    
+    container.appendChild(svg);
+  }
+
   function drawTimeline(container, timelineObj){
     container.innerHTML = "";
     const entries = Object.entries(timelineObj).sort((a,b)=>a[0].localeCompare(b[0]));
@@ -365,6 +535,11 @@
     renderList(typeList, agg.countsByType, 10);
     drawBarChart(sourceChart, agg.countsBySource);
     drawBarChart(typeChart, agg.countsByType);
+    
+    // new charts
+    drawVerticalBarChart(sourceBarChart, agg.countsBySource);
+    drawPieChart(sourcePieChart, agg.countsBySource);
+    drawPieChart(typePieChart, agg.countsByType);
 
     // top indicators
     const items = Object.entries(agg.indicatorFreq).sort((a,b)=>b[1]-a[1]).slice(0,25);
@@ -467,7 +642,7 @@
   document.getElementById('exportBtn').addEventListener('click', ()=>{
     if (!mergedRaw || mergedRaw.length === 0){ alert('No records to export'); return; }
     const lines = mergedRaw.map(r => JSON.stringify(r));
-    const blob = new Blob([lines.join('\\n')], {type: 'application/json'});
+    const blob = new Blob([lines.join('\n')], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -484,7 +659,9 @@
     totalCountEl.textContent = '0';
     statTotal.textContent = '0';
     uniqueIndicators.textContent = '0';
-    sourceList.innerHTML = ''; typeList.innerHTML=''; topIndicators.innerHTML=''; timelineChart.innerHTML=''; sourceChart.innerHTML=''; typeChart.innerHTML=''; tableBody.innerHTML='';
+    sourceList.innerHTML = ''; typeList.innerHTML=''; topIndicators.innerHTML=''; timelineChart.innerHTML=''; sourceChart.innerHTML=''; typeChart.innerHTML='';
+    sourceBarChart.innerHTML=''; sourcePieChart.innerHTML=''; typePieChart.innerHTML='';
+    tableBody.innerHTML='';
   });
 
   // paging and filtering
@@ -498,7 +675,7 @@
     const text = (e.clipboardData || window.clipboardData).getData('text');
     if (!text) return;
     // quick heuristic: contains \n and '{'
-    if (text.includes('\\n') && text.includes('{')){
+    if (text.includes('\n') && text.includes('{')){
       if (!confirm('Paste detected — parse clipboard text as JSONL?')) return;
       const parsed = parseJSONL(text);
       records = parsed.map(ensureNormalized);
