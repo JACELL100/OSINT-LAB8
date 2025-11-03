@@ -11,9 +11,9 @@ Gathers threat data from 8 different sources:
 - **AbuseIPDB** - IP address abuse reports
 - **GreyNoise** - Internet scanner intelligence
 - **Hybrid Analysis** - Malware analysis sandbox
-- **Shodan** - Internet-connected device search engine
-- **Spamhaus DROP** - Don't Route Or Peer lists
-- **VirusTotal** - File and URL analysis
+- **Shodan** - Internet-connected device search engine.
+- **Spamhaus DROP** - Don't Route Or Peer lists.
+- **VirusTotal** - File and URL analysis.
 
 ### Data Normalization
 - Converts raw threat data into standardized **STIX format**
